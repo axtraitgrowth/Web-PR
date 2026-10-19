@@ -57,6 +57,34 @@ A complete, fully functional, mobile-first romantic date invitation interactive 
 
 ---
 
+## 🔐 Private & Secure Admin Panel
+
+The platform includes a dedicated, private, server-secured Admin Panel for visitor analytics and date progression monitoring.
+
+### 🛡️ Security Features
+- **Server-Side Authentication**: Protected by signed JWT tokens and `bcryptjs` password hashing (salt rounds = 10).
+- **Manual Entry Enforced**: Browser autofill, automatic password managers, and spellcheck are disabled (`autoComplete="new-password"`, `data-lpignore="true"`, `data-1p-ignore="true"`).
+- **Password Visibility Eye Icon**: Integrated toggle eye button allowing the admin to inspect entered credentials before submitting.
+- **Rate Limiting**: Server-side brute-force defense (`express-rate-limit`) limits failed login attempts to 10 per 15 minutes per IP.
+- **Session Protection**: Private API endpoints (`/api/admin/analytics`, `/api/admin/me`, `/api/admin/change-password`) reject all unauthenticated requests with `401 Unauthorized`.
+- **Privacy First**: Only high-level anonymous session metrics (devices, browsers, and chosen date options) are tracked. No sensitive PII, tracking pixels, or third-party ad beacons are collected.
+
+### 📊 Visitor Analytics & Date Filtering
+- **Live KPI Metrics**: Total page views, unique visitor sessions, acceptance rate (who said Yes!), and confirmed date count.
+- **Funnel Progression**: Real-time drop-off and conversion rates across all 7 stages of the date invitation.
+- **Date Filtering**:
+  - Quick presets: *All Time*, *Today*, *Yesterday*, *Last 7 Days*, *Last 30 Days*.
+  - Custom Date Range Picker: Filter visitor activity between any start date and end date.
+- **Detailed Activity Log**: Searchable, filterable session table displaying exact date, time, and food choices selected by your partner.
+- **Password Management**: In-dashboard modal allowing admins to securely update their password.
+
+### 🔑 Default Credentials
+- **Username**: `admin`
+- **Password**: `AdminPassword!2026`
+*(Access by clicking **"Admin"** in the website footer or navigating to `http://localhost:5173/#admin`)*
+
+---
+
 ## 🎨 How to Personalize
 
 Open [`src/config/dateConfig.ts`](file:///c:/Web%20PR/src/config/dateConfig.ts) to customize:
@@ -69,8 +97,11 @@ Open [`src/config/dateConfig.ts`](file:///c:/Web%20PR/src/config/dateConfig.ts) 
 ## 🚀 Running the Project
 
 ```bash
-# Start development server
+# Start both backend server and frontend with live proxy
 npm run dev
+
+# Run only the backend server
+npm run server
 
 # Run production build
 npm run build
@@ -78,3 +109,4 @@ npm run build
 # Run linter
 npm run lint
 ```
+
