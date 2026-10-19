@@ -41,7 +41,11 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
       try {
         data = await res.json()
       } catch {
-        data = { error: `Server response error (${res.status})` }
+        if (res.status === 404) {
+          data = { error: 'Admin API endpoint not found (404). Please ensure the backend is running on port 3001.' }
+        } else {
+          data = { error: `Server response error (${res.status})` }
+        }
       }
 
       if (!res.ok) {

@@ -3,6 +3,8 @@ import cors from 'cors'
 import rateLimit from 'express-rate-limit'
 import bcrypt from 'bcryptjs'
 import dotenv from 'dotenv'
+import path from 'path'
+import fs from 'fs'
 import { db, initDatabase } from './db'
 import { generateToken, requireAuth } from './auth'
 
@@ -17,6 +19,12 @@ const PORT = process.env.PORT || 3001
 // Middlewares
 app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
+
+// Request logger for diagnostic tracing
+app.use((req, res, next) => {
+  console.log(`[API ${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`)
+  next()
+})
 
 
 // Rate limiter for admin login (Security requirement: max 10 failed requests per 15 minutes per IP)
@@ -42,7 +50,7 @@ const trackingLimiter = rateLimit({
 // ----------------------------------------------------
 // Public Visitor Analytics Tracking Endpoint
 // ----------------------------------------------------
-app.post('/api/track', trackingLimiter, (req: Request, res: Response) => {
+app.post(['/api/track', '/track'], trackingLimiter, (req: Request, res: Response) => {
   try {
     const {
       visitorId,
@@ -151,7 +159,7 @@ app.post('/api/track', trackingLimiter, (req: Request, res: Response) => {
 /**
  * Admin Login
  */
-app.post('/api/admin/login', loginLimiter, (req: Request, res: Response) => {
+app.post(['/api/admin/login', '/admin/login'], loginLimiter, (req: Request, res: Response) => {
   try {
     const { username, password } = req.body
 
@@ -201,14 +209,14 @@ app.post('/api/admin/login', loginLimiter, (req: Request, res: Response) => {
 /**
  * Verify current session
  */
-app.get('/api/admin/me', requireAuth, (req: Request, res: Response) => {
+app.get(['/api/admin/me', '/admin/me'], requireAuth, (req: Request, res: Response) => {
   res.json({ admin: req.admin })
 })
 
 /**
  * Admin Change Password
  */
-app.post('/api/admin/change-password', requireAuth, (req: Request, res: Response) => {
+app.post(['/api/admin/change-password', '/admin/change-password'], requireAuth, (req: Request, res: Response) => {
   try {
     const { currentPassword, newPassword } = req.body
     if (!currentPassword || !newPassword || newPassword.length < 6) {
@@ -240,7 +248,7 @@ app.post('/api/admin/change-password', requireAuth, (req: Request, res: Response
 /**
  * Clear all visitor analytics (Wipes test/dummy records)
  */
-app.post('/api/admin/clear-analytics', requireAuth, (_req: Request, res: Response) => {
+app.post(['/api/admin/clear-analytics', '/admin/clear-analytics'], requireAuth, (_req: Request, res: Response) => {
   try {
     db.prepare('DELETE FROM events').run()
     db.prepare('DELETE FROM visitors').run()
@@ -255,7 +263,7 @@ app.post('/api/admin/clear-analytics', requireAuth, (_req: Request, res: Respons
 // Protected Admin Analytics Dashboard API
 // ----------------------------------------------------
 
-app.get('/api/admin/analytics', requireAuth, (req: Request, res: Response) => {
+app.get(['/api/admin/analytics', '/admin/analytics'], requireAuth, (req: Request, res: Response) => {
   try {
     const { startDate, endDate } = req.query as { startDate?: string; endDate?: string }
 
@@ -376,6 +384,23 @@ app.get('/api/admin/analytics', requireAuth, (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to retrieve analytics' })
   }
 })
+
+// Unmatched API routes return standard JSON error
+app.use('/api', (req: Request, res: Response) => {
+  res.status(404).json({ error: `API route not found: ${req.method} ${req.url}` })
+})
+
+// Serve built frontend assets if dist folder exists
+const distPath = path.resolve(process.cwd(), 'dist')
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+  app.use((req: Request, res: Response, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+      return res.sendFile(path.join(distPath, 'index.html'))
+    }
+    next()
+  })
+}
 
 // Start server
 app.listen(Number(PORT), '0.0.0.0', () => {
