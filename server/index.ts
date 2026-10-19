@@ -15,8 +15,9 @@ const app = express()
 const PORT = process.env.PORT || 3001
 
 // Middlewares
-app.use(cors())
+app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
+
 
 // Rate limiter for admin login (Security requirement: max 10 failed requests per 15 minutes per IP)
 const loginLimiter = rateLimit({
@@ -377,6 +378,7 @@ app.get('/api/admin/analytics', requireAuth, (req: Request, res: Response) => {
 })
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`[Server] Secure Admin & Analytics API running on http://localhost:${PORT}`)
+app.listen(Number(PORT), '0.0.0.0', () => {
+  console.log(`[Server] Secure Admin & Analytics API running on http://127.0.0.1:${PORT}`)
 })
+

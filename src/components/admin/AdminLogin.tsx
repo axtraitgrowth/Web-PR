@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Lock, Eye, EyeOff, ShieldCheck, ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
+import { apiFetch } from '../../utils/api'
 
 interface AdminLoginProps {
   onLoginSuccess: (token: string, username: string) => void
@@ -25,7 +26,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
     setIsLoading(true)
 
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await apiFetch('/api/admin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,20 +37,26 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onBackTo
         }),
       })
 
-      const data = await res.json()
+      let data: any = null
+      try {
+        data = await res.json()
+      } catch {
+        data = { error: `Server response error (${res.status})` }
+      }
 
       if (!res.ok) {
-        setErrorMessage(data.error || 'Authentication failed. Please verify credentials.')
+        setErrorMessage(data?.error || 'Authentication failed. Please verify credentials.')
         setIsLoading(false)
         return
       }
 
       onLoginSuccess(data.token, data.admin.username)
-    } catch {
-      setErrorMessage('Server connection error. Please ensure the backend is running.')
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Server connection error. Please ensure the backend is running.')
       setIsLoading(false)
     }
   }
+
 
   return (
     <div className="w-full max-w-md mx-auto bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-[0_12px_40px_-10px_rgba(255,140,165,0.25)] border border-pink-100 animate-fade-in-scale">

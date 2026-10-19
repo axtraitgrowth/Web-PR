@@ -1,6 +1,7 @@
 /**
  * Privacy-friendly visitor analytics tracker
  */
+import { apiFetch } from './api'
 
 function getOrCreateVisitorId(): string {
   try {
@@ -58,7 +59,7 @@ export function trackVisitorEvent(
     const visitorId = getOrCreateVisitorId()
     const device = detectDevice()
 
-    fetch('/api/track', {
+    apiFetch('/api/track', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

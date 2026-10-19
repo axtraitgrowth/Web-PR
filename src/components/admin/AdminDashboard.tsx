@@ -21,6 +21,7 @@ import {
   Trash2,
   AlertTriangle,
 } from 'lucide-react'
+import { apiFetch } from '../../utils/api'
 
 interface AdminDashboardProps {
   token: string
@@ -131,7 +132,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         url += `?${queryParams.toString()}`
       }
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -168,7 +169,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           url += `?${queryParams.toString()}`
         }
 
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
           headers: { Authorization: `Bearer ${token}` },
         })
 
@@ -227,7 +228,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleClearAllRecords = async () => {
     setIsClearing(true)
     try {
-      const res = await fetch('/api/admin/clear-analytics', {
+      const res = await apiFetch('/api/admin/clear-analytics', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -250,7 +251,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setPasswordStatus(null)
 
     try {
-      const res = await fetch('/api/admin/change-password', {
+      const res = await apiFetch('/api/admin/change-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { AdminLogin } from './AdminLogin'
 import { AdminDashboard } from './AdminDashboard'
 import { Loader2 } from 'lucide-react'
+import { apiFetch } from '../../utils/api'
 
 interface AdminAppProps {
   onBackToWebsite: () => void
@@ -33,7 +34,7 @@ export const AdminApp: React.FC<AdminAppProps> = ({ onBackToWebsite }) => {
 
     let isMounted = true
 
-    fetch('/api/admin/me', {
+    apiFetch('/api/admin/me', {
       headers: {
         Authorization: `Bearer ${savedToken}`,
       },
