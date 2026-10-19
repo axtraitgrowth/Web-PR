@@ -5,6 +5,7 @@ import { fireCelebrationConfetti } from '../../utils/confetti'
 import { Copy, CheckCheck, RotateCcw, Calendar, Clock, Utensils, HeartHandshake } from 'lucide-react'
 
 interface CelebrationScreenProps {
+  visitorName?: string
   selectedDate: string | null
   selectedTime: string | null
   selectedFood: FoodOption | null
@@ -12,6 +13,7 @@ interface CelebrationScreenProps {
 }
 
 export const CelebrationScreen: React.FC<CelebrationScreenProps> = ({
+  visitorName,
   selectedDate,
   selectedTime,
   selectedFood,
@@ -23,6 +25,10 @@ export const CelebrationScreen: React.FC<CelebrationScreenProps> = ({
   useEffect(() => {
     fireCelebrationConfetti()
   }, [])
+
+  const headingText = visitorName
+    ? `IT'S OFFICIALLY A DATE, ${visitorName.toUpperCase()}! 🎉💗`
+    : ROMANTIC_CONFIG.celebration.heading
 
   const formattedDate = useMemo(() => {
     if (!selectedDate) return 'A special day'
@@ -39,6 +45,7 @@ export const CelebrationScreen: React.FC<CelebrationScreenProps> = ({
   const handleCopyDetails = async () => {
     const summaryText = [
       `🎉 IT'S OFFICIALLY A DATE! 💗`,
+      ...(visitorName ? [`👤 Partner: ${visitorName}`] : []),
       `📅 Date: ${formattedDate}`,
       `⏰ Time: ${selectedTime || 'To be decided'}`,
       `🍽️ Food: ${selectedFood ? `${selectedFood.emoji} ${selectedFood.name} ("${selectedFood.subtitle}")` : 'Delicious treats'}`,
@@ -91,7 +98,7 @@ export const CelebrationScreen: React.FC<CelebrationScreenProps> = ({
 
       {/* Heading */}
       <h2 className="text-2xl sm:text-3xl font-black text-pink-900 tracking-tight mb-2">
-        {ROMANTIC_CONFIG.celebration.heading}
+        {headingText}
       </h2>
 
       {/* Supporting message */}
@@ -116,6 +123,18 @@ export const CelebrationScreen: React.FC<CelebrationScreenProps> = ({
         </div>
 
         <div className="space-y-2 text-xs sm:text-sm pl-2 pr-2">
+          {visitorName && (
+            <div className="flex items-start gap-2">
+              <span className="text-base leading-none mt-0.5">🌸</span>
+              <div>
+                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wide">
+                  Reserved For
+                </p>
+                <p className="font-extrabold text-pink-950">{visitorName}</p>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-start gap-2">
             <Calendar className="w-4 h-4 text-pink-500 mt-0.5 shrink-0" />
             <div>

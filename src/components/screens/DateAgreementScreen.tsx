@@ -5,6 +5,8 @@ import { fireHeartConfetti } from '../../utils/confetti'
 import { ArrowLeft, Check, HeartHandshake, Calendar, Clock, Utensils, ShieldCheck } from 'lucide-react'
 
 interface DateAgreementScreenProps {
+  visitorName: string
+  onNameChange: (name: string) => void
   selectedDate: string | null
   selectedTime: string | null
   selectedFood: FoodOption | null
@@ -15,6 +17,8 @@ interface DateAgreementScreenProps {
 }
 
 export const DateAgreementScreen: React.FC<DateAgreementScreenProps> = ({
+  visitorName,
+  onNameChange,
   selectedDate,
   selectedTime,
   selectedFood,
@@ -36,7 +40,7 @@ export const DateAgreementScreen: React.FC<DateAgreementScreenProps> = ({
   }, [selectedDate])
 
   const handleSealClick = () => {
-    if (!agreementChecked) return
+    if (!agreementChecked || !visitorName.trim()) return
     fireHeartConfetti()
     onConfirm()
   }
@@ -72,6 +76,14 @@ export const DateAgreementScreen: React.FC<DateAgreementScreenProps> = ({
 
         {/* Selected Values Grid */}
         <div className="grid grid-cols-1 gap-2 text-xs sm:text-sm">
+          <div className="flex items-center justify-between bg-white/70 px-3 py-1.5 rounded-xl border border-pink-100">
+            <span className="text-slate-600 flex items-center gap-1.5 font-medium">
+              <span className="text-pink-500">🌸</span>
+              Reserved for:
+            </span>
+            <span className="font-extrabold text-pink-950">{visitorName || 'Special Someone'}</span>
+          </div>
+
           <div className="flex items-center justify-between bg-white/70 px-3 py-1.5 rounded-xl border border-pink-100">
             <span className="text-slate-600 flex items-center gap-1.5 font-medium">
               <Calendar className="w-3.5 h-3.5 text-pink-500" />
@@ -137,6 +149,33 @@ export const DateAgreementScreen: React.FC<DateAgreementScreenProps> = ({
         </div>
       </div>
 
+      {/* Signature Name Confirmation Field */}
+      <div className="w-full bg-white/90 rounded-2xl p-3 border border-pink-100 text-left mb-3 shadow-2xs">
+        <label htmlFor="signature-name-input" className="block text-xs font-bold text-pink-900 mb-1 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <span>✍️</span>
+            <span>Signed with love by <span className="text-rose-500 font-extrabold">*</span></span>
+          </span>
+          <span className="text-[10px] text-pink-500 font-semibold uppercase bg-pink-100/70 px-2 py-0.5 rounded-full">
+            Required
+          </span>
+        </label>
+        <input
+          id="signature-name-input"
+          type="text"
+          required
+          maxLength={60}
+          value={visitorName}
+          onChange={(e) => onNameChange(e.target.value)}
+          placeholder="Enter your name to sign..."
+          className="w-full px-3 py-2 rounded-xl bg-pink-50/70 border border-pink-200 text-xs font-bold text-pink-950 outline-none focus:bg-white focus:border-pink-500 transition-colors"
+        />
+        {!visitorName.trim() && (
+          <p className="mt-1 text-[11px] text-rose-500 font-bold">
+            Please enter your name to seal the date! 💗
+          </p>
+        )}
+      </div>
 
       {/* Checkbox agreement */}
       <label
@@ -179,10 +218,10 @@ export const DateAgreementScreen: React.FC<DateAgreementScreenProps> = ({
 
         <button
           type="button"
-          disabled={!agreementChecked}
+          disabled={!agreementChecked || !visitorName.trim()}
           onClick={handleSealClick}
           className={`flex-1 py-2.5 sm:py-3 px-4 rounded-xl font-bold text-sm transition-all duration-150 flex items-center justify-center gap-1.5 ${
-            agreementChecked
+            agreementChecked && visitorName.trim()
               ? 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:from-pink-700 active:to-rose-700 text-white shadow-lg shadow-pink-500/30 hover:scale-102 active:scale-98 cursor-pointer'
               : 'bg-pink-200/70 text-pink-400 cursor-not-allowed opacity-60'
           }`}

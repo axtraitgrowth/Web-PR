@@ -3,10 +3,13 @@ import { ROMANTIC_CONFIG } from '../../config/dateConfig'
 import { fireHeartConfetti } from '../../utils/confetti'
 
 interface InvitationScreenProps {
-  onAccept: () => void
+  initialName?: string
+  onAccept: (name: string) => void
 }
 
-export const InvitationScreen: React.FC<InvitationScreenProps> = ({ onAccept }) => {
+export const InvitationScreen: React.FC<InvitationScreenProps> = ({ initialName = '', onAccept }) => {
+  const [name, setName] = useState(initialName)
+  const [nameError, setNameError] = useState<string | null>(null)
   const [noOffset, setNoOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [noTextIndex, setNoTextIndex] = useState(0)
   const [isPressingYes, setIsPressingYes] = useState(false)
@@ -37,10 +40,16 @@ export const InvitationScreen: React.FC<InvitationScreenProps> = ({ onAccept }) 
   }, [playfulTexts.length])
 
   const handleYesClick = () => {
+    const trimmed = name.trim()
+    if (!trimmed) {
+      setNameError('Please enter your name first so I know who is saying yes! 💗')
+      return
+    }
+    setNameError(null)
     setIsPressingYes(true)
     fireHeartConfetti()
     setTimeout(() => {
-      onAccept()
+      onAccept(trimmed)
     }, 400)
   }
 
@@ -77,9 +86,51 @@ export const InvitationScreen: React.FC<InvitationScreenProps> = ({ onAccept }) 
         {ROMANTIC_CONFIG.invitation.question}
       </p>
 
-      <p className="text-sm sm:text-base text-pink-700/80 mb-8 max-w-xs font-medium">
+      <p className="text-sm sm:text-base text-pink-700/80 mb-5 max-w-xs font-medium">
         {ROMANTIC_CONFIG.invitation.subtext}
       </p>
+
+      {/* Mandatory Name Field */}
+      <div className="w-full max-w-xs mb-6 text-left">
+        <label
+          htmlFor="portal-visitor-name"
+          className="block text-xs font-bold text-pink-900 mb-1.5 flex items-center justify-between"
+        >
+          <span className="flex items-center gap-1.5">
+            <span className="text-pink-500">🌸</span>
+            <span>Your Name <span className="text-rose-500 font-extrabold">*</span></span>
+          </span>
+          <span className="text-[10px] text-pink-500 font-semibold uppercase tracking-wider bg-pink-100/70 px-2 py-0.5 rounded-full">
+            Required
+          </span>
+        </label>
+        <div className="relative">
+          <input
+            id="portal-visitor-name"
+            type="text"
+            required
+            maxLength={60}
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value)
+              if (nameError) setNameError(null)
+            }}
+            placeholder="What's your name, cutie? 💗"
+            autoComplete="off"
+            className={`w-full px-4 py-2.5 rounded-2xl bg-white/95 text-sm font-semibold text-slate-800 placeholder-pink-300 outline-none transition-all duration-200 border-2 shadow-inner ${
+              nameError
+                ? 'border-rose-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-100 bg-rose-50/40'
+                : 'border-pink-200 focus:border-pink-500 focus:ring-4 focus:ring-pink-100'
+            }`}
+          />
+        </div>
+        {nameError && (
+          <p className="mt-1.5 text-xs text-rose-600 font-bold flex items-center gap-1 animate-fade-in-scale">
+            <span>⚠️</span>
+            <span>{nameError}</span>
+          </p>
+        )}
+      </div>
 
       {/* Action Buttons Container */}
       <div

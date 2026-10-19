@@ -3,10 +3,18 @@ import { ROMANTIC_CONFIG } from '../../config/dateConfig'
 import { Sparkles, CalendarHeart } from 'lucide-react'
 
 interface AcceptanceScreenProps {
+  visitorName?: string
   onContinue: () => void
 }
 
-export const AcceptanceScreen: React.FC<AcceptanceScreenProps> = ({ onContinue }) => {
+export const AcceptanceScreen: React.FC<AcceptanceScreenProps> = ({ visitorName, onContinue }) => {
+  const headingText = visitorName
+    ? `WAIT ${visitorName.toUpperCase()}... YOU SAID YES?! 🥹💖`
+    : ROMANTIC_CONFIG.acceptance.heading
+
+  const subtextText = visitorName
+    ? `You just made my day, ${visitorName}! Now let's plan our little date.`
+    : ROMANTIC_CONFIG.acceptance.subtext
   return (
     <div className="flex flex-col items-center text-center">
       {/* Joyous animated heart mascot */}
@@ -32,12 +40,12 @@ export const AcceptanceScreen: React.FC<AcceptanceScreenProps> = ({ onContinue }
 
       {/* Heading */}
       <h2 className="text-2xl sm:text-3xl font-extrabold text-pink-900 tracking-tight mb-2">
-        {ROMANTIC_CONFIG.acceptance.heading}
+        {headingText}
       </h2>
 
       {/* Supporting text */}
       <p className="text-base sm:text-lg text-pink-800/90 font-medium mb-6 max-w-xs leading-relaxed">
-        {ROMANTIC_CONFIG.acceptance.subtext}
+        {subtextText}
       </p>
 
       {/* Cute mini excitement badge */}

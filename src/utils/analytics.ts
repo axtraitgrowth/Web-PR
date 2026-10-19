@@ -53,11 +53,16 @@ function detectDevice(): { type: 'Mobile' | 'Tablet' | 'Desktop'; browser: strin
 export function trackVisitorEvent(
   eventType: string,
   stepNumber: number,
-  details?: Record<string, any>
+  details?: Record<string, any>,
+  visitorName?: string | null
 ): void {
   try {
     const visitorId = getOrCreateVisitorId()
     const device = detectDevice()
+    let currentName = visitorName || null
+    if (!currentName && typeof sessionStorage !== 'undefined') {
+      currentName = sessionStorage.getItem('romantic_date_visitor_name') || null
+    }
 
     apiFetch('/api/track', {
       method: 'POST',
@@ -66,9 +71,14 @@ export function trackVisitorEvent(
       },
       body: JSON.stringify({
         visitorId,
+        visitorName: currentName,
+        name: currentName,
         eventType,
         stepNumber,
-        details,
+        details: {
+          ...details,
+          ...(currentName ? { name: currentName } : {}),
+        },
         device,
       }),
     }).catch(() => {

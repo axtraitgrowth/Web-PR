@@ -44,6 +44,7 @@ interface UniversalAdmin {
 
 interface UniversalVisitor {
   id: string
+  name: string | null
   first_visit: string
   last_visit: string
   device_type: string
@@ -325,12 +326,24 @@ function createUniversalStatement(sql: string) {
 
       // 4. INSERT INTO visitors (...) VALUES (...)
       if (/INSERT INTO visitors/i.test(normalized)) {
-        const [
-          id, first_visit, last_visit, device_type, browser, os, referrer,
-          current_step, accepted_date, chosen_date, chosen_time, chosen_food, date_sealed
-        ] = params
+        let id, name = null, first_visit, last_visit, device_type, browser, os, referrer,
+            current_step, accepted_date, chosen_date, chosen_time, chosen_food, date_sealed
+        if (params.length >= 14) {
+          [id, name, first_visit, last_visit, device_type, browser, os, referrer,
+           current_step, accepted_date, chosen_date, chosen_time, chosen_food, date_sealed] = params
+        } else {
+          [id, first_visit, last_visit, device_type, browser, os, referrer,
+           current_step, accepted_date, chosen_date, chosen_time, chosen_food, date_sealed] = params
+        }
         memoryData.visitors.push({
-          id, first_visit, last_visit, device_type, browser, os, referrer,
+          id,
+          name: name || null,
+          first_visit,
+          last_visit,
+          device_type,
+          browser,
+          os,
+          referrer,
           current_step: Number(current_step) || 1,
           accepted_date: Number(accepted_date) || 0,
           chosen_date: chosen_date || null,
@@ -344,16 +357,29 @@ function createUniversalStatement(sql: string) {
 
       // 5. UPDATE visitors SET ... WHERE id = ?
       if (/UPDATE visitors/i.test(normalized)) {
-        const [now, highestStep, isAccepted, chosenDate, chosenTime, chosenFood, isSealed, visitorId] = params
+        const visitorId = params[params.length - 1]
         const visitor = memoryData.visitors.find((v) => v.id === visitorId)
         if (visitor) {
-          visitor.last_visit = now
-          visitor.current_step = Number(highestStep) || visitor.current_step
-          visitor.accepted_date = Number(isAccepted) || visitor.accepted_date
-          if (chosenDate) visitor.chosen_date = chosenDate
-          if (chosenTime) visitor.chosen_time = chosenTime
-          if (chosenFood) visitor.chosen_food = chosenFood
-          visitor.date_sealed = Number(isSealed) || visitor.date_sealed
+          if (params.length >= 9) {
+            const [name, now, highestStep, isAccepted, chosenDate, chosenTime, chosenFood, isSealed] = params
+            if (name) visitor.name = name
+            visitor.last_visit = now
+            visitor.current_step = Number(highestStep) || visitor.current_step
+            visitor.accepted_date = Number(isAccepted) || visitor.accepted_date
+            if (chosenDate) visitor.chosen_date = chosenDate
+            if (chosenTime) visitor.chosen_time = chosenTime
+            if (chosenFood) visitor.chosen_food = chosenFood
+            visitor.date_sealed = Number(isSealed) || visitor.date_sealed
+          } else {
+            const [now, highestStep, isAccepted, chosenDate, chosenTime, chosenFood, isSealed] = params
+            visitor.last_visit = now
+            visitor.current_step = Number(highestStep) || visitor.current_step
+            visitor.accepted_date = Number(isAccepted) || visitor.accepted_date
+            if (chosenDate) visitor.chosen_date = chosenDate
+            if (chosenTime) visitor.chosen_time = chosenTime
+            if (chosenFood) visitor.chosen_food = chosenFood
+            visitor.date_sealed = Number(isSealed) || visitor.date_sealed
+          }
           saveUniversalData()
         }
         return { changes: 1 }
@@ -438,6 +464,7 @@ export function initDatabase() {
     sqliteDb.exec(`
       CREATE TABLE IF NOT EXISTS visitors (
         id TEXT PRIMARY KEY,
+        name TEXT,
         first_visit TEXT NOT NULL,
         last_visit TEXT NOT NULL,
         device_type TEXT NOT NULL,
@@ -453,6 +480,9 @@ export function initDatabase() {
       );
       CREATE INDEX IF NOT EXISTS idx_visitors_last_visit ON visitors(last_visit);
     `)
+    try {
+      sqliteDb.exec('ALTER TABLE visitors ADD COLUMN name TEXT;')
+    } catch {}
 
     // 3. Visitor events log table
     sqliteDb.exec(`

@@ -12,6 +12,7 @@ const DEFAULT_PASSWORD_HASH = bcrypt.hashSync(DEFAULT_PASSWORD, 10)
 
 interface VisitorRecord {
   id: string
+  name: string | null
   first_visit: string
   last_visit: string
   device_type: string
@@ -376,6 +377,7 @@ export default async function handler(req: any, res: any) {
           return {
             id: e.id,
             visitor_id: e.visitor_id,
+            visitor_name: v?.name || null,
             event_type: e.event_type,
             step_number: e.step_number,
             details: e.details,
@@ -410,6 +412,8 @@ export default async function handler(req: any, res: any) {
       const body = await parseBody(req)
       const {
         visitorId,
+        visitorName,
+        name,
         eventType = 'page_view',
         stepNumber = 1,
         details,
@@ -419,6 +423,8 @@ export default async function handler(req: any, res: any) {
       if (!visitorId || typeof visitorId !== 'string') {
         return sendJson(res, 400, { error: 'visitorId is required' })
       }
+
+      const submittedName = (visitorName || name || details?.name || null)?.toString().trim() || null
 
       const now = new Date().toISOString()
       const deviceType = device.type || 'Desktop'
@@ -438,6 +444,7 @@ export default async function handler(req: any, res: any) {
       if (!visitor) {
         visitor = {
           id: visitorId,
+          name: submittedName,
           first_visit: now,
           last_visit: now,
           device_type: deviceType,
@@ -456,6 +463,7 @@ export default async function handler(req: any, res: any) {
         visitor.last_visit = now
         visitor.current_step = highestStep
         visitor.accepted_date = isAccepted
+        if (submittedName) visitor.name = submittedName
         if (chosenDate) visitor.chosen_date = chosenDate
         if (chosenTime) visitor.chosen_time = chosenTime
         if (chosenFood) visitor.chosen_food = chosenFood

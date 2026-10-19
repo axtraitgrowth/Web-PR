@@ -26,14 +26,21 @@ export function App() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
   // Multi-step public date invitation state
-  const [state, setState] = useState<DatePlanState>({
-    currentStep: 1,
-    invitationAccepted: false,
-    selectedDate: null,
-    selectedTime: null,
-    selectedFood: null,
-    agreementChecked: false,
-    isConfirmed: false,
+  const [state, setState] = useState<DatePlanState>(() => {
+    let savedName = ''
+    try {
+      savedName = sessionStorage.getItem('romantic_date_visitor_name') || ''
+    } catch {}
+    return {
+      currentStep: 1,
+      visitorName: savedName,
+      invitationAccepted: false,
+      selectedDate: null,
+      selectedTime: null,
+      selectedFood: null,
+      agreementChecked: false,
+      isConfirmed: false,
+    }
   })
 
   // Handle URL changes & browser history
@@ -54,9 +61,9 @@ export function App() {
   // Initial tracking event on landing page load
   useEffect(() => {
     if (currentRoute === 'public') {
-      trackVisitorEvent('page_view', 1, { page: 'invitation' })
+      trackVisitorEvent('page_view', 1, { page: 'invitation' }, state.visitorName)
     }
-  }, [currentRoute])
+  }, [currentRoute, state.visitorName])
 
   const navigateTo = (route: 'public' | 'admin') => {
     setCurrentRoute(route)
@@ -71,13 +78,25 @@ export function App() {
   }
 
   // Handlers for state updates and transitions with tracking
-  const handleAcceptInvitation = () => {
+  const handleAcceptInvitation = (name: string) => {
+    const trimmed = name.trim()
+    try {
+      sessionStorage.setItem('romantic_date_visitor_name', trimmed)
+    } catch {}
     setState((prev) => ({
       ...prev,
+      visitorName: trimmed,
       invitationAccepted: true,
       currentStep: 2,
     }))
-    trackVisitorEvent('accept_invitation', 2, { response: 'Said Yes!' })
+    trackVisitorEvent('accept_invitation', 2, { name: trimmed, response: 'Said Yes!' }, trimmed)
+  }
+
+  const handleNameChange = (name: string) => {
+    setState((prev) => ({ ...prev, visitorName: name }))
+    try {
+      sessionStorage.setItem('romantic_date_visitor_name', name)
+    } catch {}
   }
 
   const handleStartPlanning = () => {
@@ -85,7 +104,7 @@ export function App() {
       ...prev,
       currentStep: 3,
     }))
-    trackVisitorEvent('start_planning', 3)
+    trackVisitorEvent('start_planning', 3, { name: state.visitorName }, state.visitorName)
   }
 
   const handleSelectDate = (dateStr: string) => {
@@ -93,7 +112,7 @@ export function App() {
       ...prev,
       selectedDate: dateStr,
     }))
-    trackVisitorEvent('select_date', 3, { date: dateStr })
+    trackVisitorEvent('select_date', 3, { name: state.visitorName, date: dateStr }, state.visitorName)
   }
 
   const handleSelectTime = (timeStr: string) => {
@@ -101,7 +120,7 @@ export function App() {
       ...prev,
       selectedTime: timeStr,
     }))
-    trackVisitorEvent('select_time', 4, { time: timeStr })
+    trackVisitorEvent('select_time', 4, { name: state.visitorName, time: timeStr }, state.visitorName)
   }
 
   const handleSelectFood = (food: FoodOption) => {
@@ -109,7 +128,7 @@ export function App() {
       ...prev,
       selectedFood: food,
     }))
-    trackVisitorEvent('select_food', 5, { food: `${food.emoji} ${food.name}` })
+    trackVisitorEvent('select_food', 5, { name: state.visitorName, food: `${food.emoji} ${food.name}` }, state.visitorName)
   }
 
   const handleToggleAgreement = (checked: boolean) => {
@@ -118,7 +137,7 @@ export function App() {
       agreementChecked: checked,
     }))
     if (checked) {
-      trackVisitorEvent('agree_terms', 6)
+      trackVisitorEvent('agree_terms', 6, { name: state.visitorName }, state.visitorName)
     }
   }
 
@@ -129,10 +148,11 @@ export function App() {
       currentStep: 7,
     }))
     trackVisitorEvent('seal_date', 7, {
+      name: state.visitorName,
       date: state.selectedDate,
       time: state.selectedTime,
       food: state.selectedFood?.name,
-    })
+    }, state.visitorName)
   }
 
   const handleGoBack = () => {
@@ -150,8 +170,12 @@ export function App() {
   }
 
   const handleStartOver = () => {
+    try {
+      sessionStorage.removeItem('romantic_date_visitor_name')
+    } catch {}
     setState({
       currentStep: 1,
+      visitorName: '',
       invitationAccepted: false,
       selectedDate: null,
       selectedTime: null,
@@ -192,11 +216,17 @@ export function App() {
         {/* Centered romantic card */}
         <CuteCard key={state.currentStep}>
           {state.currentStep === 1 && (
-            <InvitationScreen onAccept={handleAcceptInvitation} />
+            <InvitationScreen
+              initialName={state.visitorName}
+              onAccept={handleAcceptInvitation}
+            />
           )}
 
           {state.currentStep === 2 && (
-            <AcceptanceScreen onContinue={handleStartPlanning} />
+            <AcceptanceScreen
+              visitorName={state.visitorName}
+              onContinue={handleStartPlanning}
+            />
           )}
 
           {state.currentStep === 3 && (
@@ -228,6 +258,8 @@ export function App() {
 
           {state.currentStep === 6 && (
             <DateAgreementScreen
+              visitorName={state.visitorName}
+              onNameChange={handleNameChange}
               selectedDate={state.selectedDate}
               selectedTime={state.selectedTime}
               selectedFood={state.selectedFood}
@@ -240,6 +272,7 @@ export function App() {
 
           {state.currentStep === 7 && (
             <CelebrationScreen
+              visitorName={state.visitorName}
               selectedDate={state.selectedDate}
               selectedTime={state.selectedTime}
               selectedFood={state.selectedFood}

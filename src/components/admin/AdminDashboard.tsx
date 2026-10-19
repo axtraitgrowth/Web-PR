@@ -45,6 +45,7 @@ interface AnalyticsData {
   dailyTrend: Array<{ date: string; views: number; visitors: number }>
   recentVisitors: Array<{
     id: string
+    name: string | null
     first_visit: string
     last_visit: string
     device_type: string
@@ -284,6 +285,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
     const q = searchQuery.toLowerCase()
     return list.filter((v) =>
+      (v.name && v.name.toLowerCase().includes(q)) ||
       v.id.toLowerCase().includes(q) ||
       v.browser.toLowerCase().includes(q) ||
       v.device_type.toLowerCase().includes(q) ||
@@ -722,7 +724,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search session, device, food..."
+                placeholder="Search by name, date, food, device..."
                 className="pl-9 pr-3 py-1.5 rounded-xl bg-pink-50/70 border border-pink-200 text-xs font-semibold text-slate-800 placeholder-pink-300 outline-none w-full sm:w-64"
               />
             </div>
@@ -735,41 +737,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-pink-50/80 text-pink-900 font-bold border-b border-pink-100">
-                  <th className="py-2.5 px-3">Session</th>
-                  <th className="py-2.5 px-3">Last Active</th>
-                  <th className="py-2.5 px-3">Device & OS</th>
-                  <th className="py-2.5 px-3">Highest Stage</th>
+                  <th className="py-2.5 px-3">Visitor Name</th>
+                  <th className="py-2.5 px-3">Submitted At</th>
                   <th className="py-2.5 px-3">Date Picked</th>
                   <th className="py-2.5 px-3">Time Picked</th>
                   <th className="py-2.5 px-3">Food & Drinks</th>
-                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">Progress & Status</th>
+                  <th className="py-2.5 px-3">Device & Session</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-pink-50">
                 {filteredVisitors.length > 0 ? (
                   filteredVisitors.map((visitor) => (
                     <tr key={visitor.id} className="hover:bg-pink-50/40 transition-colors">
-                      {/* Session ID */}
-                      <td className="py-2.5 px-3 font-mono text-[11px] text-pink-700 font-semibold">
-                        {visitor.id.length > 14 ? `${visitor.id.substring(0, 12)}...` : visitor.id}
-                      </td>
-
-                      {/* Last Active */}
-                      <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
-                        {formatTimestamp(visitor.last_visit)}
-                      </td>
-
-                      {/* Device & OS */}
+                      {/* Visitor Name */}
                       <td className="py-2.5 px-3 whitespace-nowrap">
-                        <span className="font-semibold text-slate-800">{visitor.device_type}</span>
-                        <span className="text-[11px] text-slate-400 block">
-                          {visitor.browser} • {visitor.os}
-                        </span>
+                        {visitor.name ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-6 h-6 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center text-xs font-bold shrink-0">
+                              🌸
+                            </span>
+                            <span className="font-extrabold text-pink-950 text-xs sm:text-sm">
+                              {visitor.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px]">—</span>
+                        )}
                       </td>
 
-                      {/* Highest Stage */}
-                      <td className="py-2.5 px-3 font-bold text-pink-900">
-                        Stage {visitor.current_step} of 7
+                      {/* Submitted At (Date & Time) */}
+                      <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
+                        <span className="font-semibold text-slate-800 block">
+                          {formatTimestamp(visitor.last_visit)}
+                        </span>
+                        <span className="text-[10px] text-pink-600/80 font-medium block">
+                          First: {formatTimestamp(visitor.first_visit)}
+                        </span>
                       </td>
 
                       {/* Date Picked */}
@@ -807,27 +811,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         )}
                       </td>
 
-                      {/* Status */}
+                      {/* Progress & Status */}
                       <td className="py-2.5 px-3 whitespace-nowrap">
-                        {visitor.date_sealed === 1 ? (
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px] inline-flex items-center gap-1">
-                            <span>✓ Sealed 🎉</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {visitor.date_sealed === 1 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px] inline-flex items-center gap-1">
+                              <span>✓ Sealed 🎉</span>
+                            </span>
+                          ) : visitor.accepted_date === 1 ? (
+                            <span className="px-2 py-0.5 rounded-full bg-pink-100 text-pink-800 font-bold text-[10px]">
+                              Said Yes 💖
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium text-[10px]">
+                              Viewing 👀
+                            </span>
+                          )}
+                          <span className="text-[10px] text-pink-800 font-bold">
+                            (Stage {visitor.current_step}/7)
                           </span>
-                        ) : visitor.accepted_date === 1 ? (
-                          <span className="px-2 py-0.5 rounded-full bg-pink-100 text-pink-800 font-bold text-[10px]">
-                            Said Yes 💖
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium text-[10px]">
-                            Viewing 👀
-                          </span>
-                        )}
+                        </div>
+                      </td>
+
+                      {/* Device & Session */}
+                      <td className="py-2.5 px-3 whitespace-nowrap">
+                        <span className="font-semibold text-slate-800 text-[11px] block">
+                          {visitor.device_type} • {visitor.browser}
+                        </span>
+                        <span className="font-mono text-[10px] text-pink-700/80">
+                          {visitor.id.length > 14 ? `${visitor.id.substring(0, 12)}...` : visitor.id}
+                        </span>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-slate-400 italic">
+                    <td colSpan={7} className="py-8 text-center text-slate-400 italic">
                       No visitor records match your search filter.
                     </td>
                   </tr>

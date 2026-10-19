@@ -8,6 +8,7 @@ export interface FoodOption {
 
 export interface DatePlanState {
   currentStep: number // 1 to 7
+  visitorName: string // user's submitted name
   invitationAccepted: boolean
   selectedDate: string | null // e.g., '2026-10-24' or formatted display string
   selectedTime: string | null
